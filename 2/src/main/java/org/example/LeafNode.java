@@ -70,22 +70,22 @@ class LeafNode<K extends Comparable<K>, V> implements Node<K, V> {
         dictionary[getNumPairs()] = null;
     }
 
-    @SuppressWarnings("unchecked")
     boolean insert(DictionaryPair dp) {
+        for (int i = 0; i < getNumPairs(); i++) {
+            if (this.dictionary[i] != null && this.dictionary[i].compareTo(dp) == 0) {
+                this.dictionary[i].value = (V) dp.value;
+                return true;
+            }
+        }
+
         if (this.isFull()) {
             return false;
-        } else {
-            for (int i = 0; i < getNumPairs(); i++) {
-                if (this.dictionary[i] != null && this.dictionary[i].compareTo(dp) == 0) {
-                    this.dictionary[i].value = (V) dp.value;
-                    return true;
-                }
-            }
-            this.dictionary[getNumPairs()] = (DictionaryPair<K, V>) dp;
-            setNumPairs(getNumPairs() + 1);
-            Arrays.sort(this.dictionary, 0, getNumPairs());
-            return true;
         }
+
+        this.dictionary[getNumPairs()] = (DictionaryPair<K, V>) dp;
+        setNumPairs(getNumPairs() + 1);
+        Arrays.sort(this.dictionary, 0, getNumPairs());
+        return true;
     }
 
     boolean isDeficient() { return getNumPairs() < getMinNumPairs(); }

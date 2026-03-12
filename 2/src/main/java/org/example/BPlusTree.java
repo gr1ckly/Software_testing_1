@@ -2,11 +2,18 @@ package org.example;
 import java.util.*;
 
 public class BPlusTree<K extends Comparable<K>, V> {
+    private static final int MIN_DEGREE = 3;
+    private static final int MAX_DEGREE = 7;
     int m;
     public InternalNode<K, V> root;
     public LeafNode<K, V> firstLeaf;
 
     public BPlusTree(int m) {
+        if (m < MIN_DEGREE || m > MAX_DEGREE) {
+            throw new IllegalArgumentException(
+                    "Tree degree must be between " + MIN_DEGREE + " and " + MAX_DEGREE
+            );
+        }
         this.m = m;
         this.root = null;
     }
@@ -22,55 +29,35 @@ public class BPlusTree<K extends Comparable<K>, V> {
     }
 
     private LeafNode<K, V> findLeafNode(K key) {
-        K[] keys = this.root.getKeys();
-        Node<K, V>[] children = this.root.getChildPointers();
-        int i;
+        Node<K, V> current = this.root;
 
-        for (i = 0; i < this.root.getDegree() - 1; i++) {
-            if (keys[i] == null) break;
-            if (key.compareTo(keys[i]) < 0) { break; }
+        while (current instanceof InternalNode) {
+            InternalNode<K, V> node = (InternalNode<K, V>) current;
+            K[] keys = node.getKeys();
+            Node<K, V>[] children = node.getChildPointers();
+            int i;
+
+            for (i = 0; i < node.getDegree() - 1; i++) {
+                if (keys[i] == null) break;
+                if (key.compareTo(keys[i]) < 0) { break; }
+            }
+
+            while (i < children.length && children[i] == null) {
+                i++;
+            }
+
+            if (i >= children.length) {
+                throw new IllegalStateException("Could not find valid child pointer in internal node");
+            }
+
+            current = children[i];
         }
 
-        while (i < children.length && children[i] == null) {
-            i++;
+        if (current instanceof LeafNode) {
+            return (LeafNode<K, V>) current;
         }
 
-        if (i >= children.length) {
-            throw new IllegalStateException("Could not find valid child pointer in root");
-        }
-
-        Node<K, V> child = children[i];
-        if (child instanceof LeafNode) {
-            return (LeafNode<K, V>)child;
-        } else {
-            return findLeafNode((InternalNode<K, V>)child, key);
-        }
-    }
-
-    private LeafNode<K, V> findLeafNode(InternalNode<K, V> node, K key) {
-        K[] keys = node.getKeys();
-        Node<K, V>[] children = node.getChildPointers();
-        int i;
-
-        for (i = 0; i < node.getDegree() - 1; i++) {
-            if (keys[i] == null) break;
-            if (key.compareTo(keys[i]) < 0) { break; }
-        }
-
-        while (i < children.length && children[i] == null) {
-            i++;
-        }
-
-        if (i >= children.length) {
-            throw new IllegalStateException("Could not find valid child pointer in internal node");
-        }
-
-        Node<K, V> childNode = children[i];
-        if (childNode instanceof LeafNode) {
-            return (LeafNode<K, V>)childNode;
-        } else {
-            return findLeafNode((InternalNode<K, V>)childNode, key);
-        }
+        throw new IllegalStateException("Expected leaf node when traversing B+ tree");
     }
 
     private int findIndexOfPointer(Node<K, V>[] pointers, LeafNode<K, V> node) {
@@ -102,23 +89,35 @@ public class BPlusTree<K extends Comparable<K>, V> {
             }
         }
 
-        else if (in.getLeftSibling() != null && in.getLeftSibling().isLendable()) {
+        else if (in.getLeftSibling() != null &&
+                in.getLeftSibling().getParent() == in.getParent() &&
+                in.getLeftSibling().isLendable()) {
             sibling = in.getLeftSibling();
-            
+            int parentPointerIndex = parent.findIndexOfPointer(in);
             K borrowedKey = sibling.getKeys()[sibling.getDegree() - 2];
             Node<K, V> pointer = sibling.getChildPointers()[sibling.getDegree() - 1];
+            int inDegree = in.getDegree();
 
-            in.getKeys()[in.getDegree() - 1] = parent.getKeys()[parent.findIndexOfPointer(in) - 1];
-            in.getChildPointers()[in.getDegree()] = pointer;
+            for (int i = inDegree; i > 0; i--) {
+                in.getChildPointers()[i] = in.getChildPointers()[i - 1];
+            }
+            in.getChildPointers()[0] = pointer;
             pointer.setParent(in);
 
-            parent.getKeys()[parent.findIndexOfPointer(in) - 1] = borrowedKey;
+            for (int i = inDegree - 1; i > 0; i--) {
+                in.getKeys()[i] = in.getKeys()[i - 1];
+            }
+            in.getKeys()[0] = parent.getKeys()[parentPointerIndex - 1];
+
+            parent.getKeys()[parentPointerIndex - 1] = borrowedKey;
 
             sibling.removeKey(sibling.getDegree() - 2);
             sibling.removePointer(sibling.getDegree() - 1);
             
-            in.setDegree(in.getDegree() + 1);
-        } else if (in.getRightSibling() != null && in.getRightSibling().isLendable()) {
+            in.setDegree(inDegree + 1);
+        } else if (in.getRightSibling() != null &&
+                in.getRightSibling().getParent() == in.getParent() &&
+                in.getRightSibling().isLendable()) {
             sibling = in.getRightSibling();
 
             K borrowedKey = sibling.getKeys()[0];
@@ -141,7 +140,9 @@ public class BPlusTree<K extends Comparable<K>, V> {
             sibling.setDegree(sibling.getDegree() - 1);
         }
 
-        else if (in.getLeftSibling() != null && in.getLeftSibling().isMergeable()) {
+        else if (in.getLeftSibling() != null &&
+                in.getLeftSibling().getParent() == in.getParent() &&
+                in.getLeftSibling().isMergeable()) {
             sibling = in.getLeftSibling();
             int pointerIndex = parent.findIndexOfPointer(in);
             if (sibling.getDegree() > 0) {
@@ -168,7 +169,9 @@ public class BPlusTree<K extends Comparable<K>, V> {
             sortKeys(parent.getKeys());
 
             sibling.setRightSibling(in.getRightSibling());
-        } else if (in.getRightSibling() != null && in.getRightSibling().isMergeable()) {
+        } else if (in.getRightSibling() != null &&
+                in.getRightSibling().getParent() == in.getParent() &&
+                in.getRightSibling().isMergeable()) {
             sibling = in.getRightSibling();
             int pointerIndex = parent.findIndexOfPointer(in);
             if (in.getDegree() > 0) {
@@ -725,15 +728,19 @@ public class BPlusTree<K extends Comparable<K>, V> {
     private boolean validateInternalNodeKeys() {
         if (root == null) return true;
 
-        return validateInternalNodeKeyRanges(root);
+        return validateInternalNodeKeyRanges(root, null, null);
     }
 
-    private boolean validateInternalNodeKeyRanges(InternalNode<K, V> node) {
+    private boolean validateInternalNodeKeyRanges(InternalNode<K, V> node, K minKey, K maxKey) {
         if (node == null) return true;
+
+        if (!validateNodeKeyRange(node, minKey, maxKey)) {
+            return false;
+        }
 
         Node<K, V>[] children = node.getChildPointers();
         K[] keys = node.getKeys();
-        for (int i = 1; i < keys.length; i++) {
+        for (int i = 1; i < node.getDegree() - 1; i++) {
             if (keys[i] != null && keys[i-1] != null && keys[i-1].compareTo(keys[i]) >= 0) {
                 return false;
             }
@@ -741,8 +748,19 @@ public class BPlusTree<K extends Comparable<K>, V> {
 
         for (int i = 0; i < node.getDegree(); i++) {
             Node<K, V> child = children[i];
+            if (child == null) {
+                return false;
+            }
+
+            K childMin = (i == 0) ? minKey : keys[i - 1];
+            K childMax = (i == node.getDegree() - 1) ? maxKey : keys[i];
+
             if (child instanceof InternalNode) {
-                if (!validateInternalNodeKeyRanges((InternalNode<K, V>) child)) {
+                if (!validateInternalNodeKeyRanges((InternalNode<K, V>) child, childMin, childMax)) {
+                    return false;
+                }
+            } else if (child instanceof LeafNode) {
+                if (!validateNodeKeyRange(child, childMin, childMax)) {
                     return false;
                 }
             }
@@ -757,7 +775,7 @@ public class BPlusTree<K extends Comparable<K>, V> {
             K[] keys = internalNode.getKeys();
 
             for (K key : keys) {
-                if (key != null && ((minKey != null && key.compareTo(minKey) < 0) || (maxKey != null && key.compareTo(maxKey) > 0))) {
+                if (key != null && ((minKey != null && key.compareTo(minKey) < 0) || (maxKey != null && key.compareTo(maxKey) >= 0))) {
                     return false;
                 }
             }
@@ -766,7 +784,7 @@ public class BPlusTree<K extends Comparable<K>, V> {
             DictionaryPair<K, V>[] pairs = leafNode.getDictionary();
 
             for (DictionaryPair<K, V> pair : pairs) {
-                if (pair != null && ((minKey != null && pair.key.compareTo(minKey) < 0) || (maxKey != null && pair.key.compareTo(maxKey) > 0))) {
+                if (pair != null && ((minKey != null && pair.key.compareTo(minKey) < 0) || (maxKey != null && pair.key.compareTo(maxKey) >= 0))) {
                     return false;
                 }
             }
