@@ -1,8 +1,5 @@
 package org.itmo.softwaretesting1.domain;
 
-/**
- * Main‑класс, "повествующий" историю от начала до конца.
- */
 public class SceneNarration {
 
     public static void main(String[] args) {
