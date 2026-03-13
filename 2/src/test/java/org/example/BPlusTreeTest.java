@@ -115,6 +115,8 @@ class BPlusTreeTest {
         assertEquals("A", tree.search(1));
     }
 
+    // вставка null, поиск несуществующего значения
+    // добавить трейсы
     @Test
     @DisplayName("Серия сложных операций вставки и удаления")
     void testComplexOperations() {

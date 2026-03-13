@@ -10,7 +10,7 @@ class SceneDomainModelTest {
     void trillianGrabsArthurAndPullsToDoor() {
         Trillian trillian = new Trillian();
         Arthur arthur = new Arthur();
-        Door door = new Door();
+//        Door door = new Door();
         assertEquals(trillian.getState(), Trillian.trillianState.DONT_HOLDING_ARTHUR);
         assertEquals(trillian.grabArthur(arthur), Trillian.trillianState.HOLDING_ARTHUR);
 
@@ -29,18 +29,18 @@ class SceneDomainModelTest {
         assertSame(arthur, trillian.getHoldingArthur(), "Триллиан должна держать Артура за руку");
 
     }
-
+//разбить тесты
     @Test
     void fordAndZaphodAttemptToOpenDoor() {
         Door door = new Door();
         Ford ford = new Ford(door);
         Zaphod zaphod = new Zaphod(door);
 
-        RuntimeException exceptionFord = assertThrows(RuntimeException.class, ford::tryOpenDoor);
+        RuntimeException exceptionFord = assertThrows(RuntimeException.class, () -> door.attemptOpen(ford));
 
         assertEquals("Дверь в истории откроется только с 3-го раза", exceptionFord.getMessage());
 
-        RuntimeException exceptionZap = assertThrows(RuntimeException.class, zaphod::tryOpenDoor);
+        RuntimeException exceptionZap = assertThrows(RuntimeException.class, () -> door.attemptOpen(zaphod));
 
         assertEquals("Дверь в истории откроется только с 3-го раза", exceptionZap.getMessage());
 

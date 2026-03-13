@@ -16,7 +16,7 @@ public class SteppeSeriesTest {
     record TestData(double x, int iteration, double accuracy, double ans) {}
 
     static Stream<TestData> getTestStream() {
-        return Stream.iterate(-3.14, x -> x <= 3.14, x -> x += 0.1)
+        return Stream.iterate(-25, x -> x <= 31.4, x -> x += 0.1)
                 .map(x -> new TestData(x, 100, 0.05, Math.sin(x)));
     }
 
@@ -47,6 +47,7 @@ public class SteppeSeriesTest {
         }
     }
 
+    // проверить точность при разных счкетчиках
     @ParameterizedTest
     @DisplayName("Проверка значений от -3.14 до 3.14 при помощи генератора")
     @MethodSource("getTestStream")
