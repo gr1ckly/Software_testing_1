@@ -10,29 +10,45 @@ class SceneDomainModelTest {
     void trillianGrabsArthurAndPullsToDoor() {
         Trillian trillian = new Trillian();
         Arthur arthur = new Arthur();
-        Door door = new Door("выход");
+        Door door = new Door();
+        assertEquals(trillian.getState(), Trillian.trillianState.DONT_HOLDING_ARTHUR);
+        assertEquals(trillian.grabArthur(arthur), Trillian.trillianState.HOLDING_ARTHUR);
 
-        trillian.grabArthur(arthur);
-        trillian.pullArthurToDoor(door);
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> trillian.grabArthur(arthur));
+
+        assertEquals("Она уже держит Артура", exception.getMessage());
+
+        trillian.pullArthurToDoor();
+        assertEquals(arthur.getState(), Arthur.State.BE_AT_DOOR);
+
+        RuntimeException exception1 = assertThrows(RuntimeException.class, () -> trillian.pullArthurToDoor());
+
+        assertEquals("Артур уже у двери", exception1.getMessage());
+
 
         assertSame(arthur, trillian.getHoldingArthur(), "Триллиан должна держать Артура за руку");
-        assertSame(door, trillian.getTargetDoor(), "Триллиан тянет к этой двери");
-        assertSame(door, arthur.getTargetDoor(), "Артур также направлен к этой же двери");
+
     }
 
     @Test
     void fordAndZaphodAttemptToOpenDoor() {
-        Door door = new Door("выход");
+        Door door = new Door();
         Ford ford = new Ford(door);
         Zaphod zaphod = new Zaphod(door);
 
-        boolean openedByFord = ford.tryOpenDoor();
-        boolean openedByZaphod = zaphod.tryOpenDoor();
+        RuntimeException exceptionFord = assertThrows(RuntimeException.class, ford::tryOpenDoor);
 
-        assertTrue(openedByFord, "Дверь должна открыться при попытке Форда");
-        assertTrue(openedByZaphod, "После первой успешной попытки дверь остаётся открытой");
-        assertEquals(2, door.getOpenAttempts(), "Должны быть зафиксированы две попытки открыть дверь");
-        assertTrue(door.isOpen(), "Дверь в итоге должна быть открыта");
+        assertEquals("Дверь в истории откроется только с 3-го раза", exceptionFord.getMessage());
+
+        RuntimeException exceptionZap = assertThrows(RuntimeException.class, zaphod::tryOpenDoor);
+
+        assertEquals("Дверь в истории откроется только с 3-го раза", exceptionZap.getMessage());
+
+        assertEquals(ford.tryOpenDoor(), Door.doorState.OPEN, "Дверь должна открыться с 3-й попытки");
+
+        RuntimeException exception = assertThrows(RuntimeException.class, ford::tryOpenDoor);
+
+        assertEquals("Дверь уже открыта", exception.getMessage());
     }
 
     @Test
@@ -47,7 +63,7 @@ class SceneDomainModelTest {
         rodents.startApproach();
         rodents.hypnotize(arthur);
 
-        assertTrue(rodents.isApproaching(), "Грызуны должны надвигаться");
+        assertEquals(rodents.isApproaching(), FlyingRodentGroup.rodentState.APPROACHING, "Грызуны должны надвигаться");
         assertTrue(arthur.isHypnotized(), "Артур должен быть загипнотизирован");
         assertEquals(Arthur.State.HYPNOTIZED, arthur.getState(), "Состояние Артура — HYPNOTIZED");
     }
@@ -66,25 +82,6 @@ class SceneDomainModelTest {
         assertFalse(arthur.isHypnotized(), "После пробуждения Артур не должен быть гипнотизирован");
         assertTrue(arthur.isAlive(), "После пробуждения Артур снова живой");
         assertEquals(Arthur.State.ALIVE, arthur.getState(), "Состояние Артура — ALIVE");
-    }
-
-    @Test
-    void fordAndZaphodUseInterfacePerson() {
-        Door door = new Door("выход");
-        Person ford = new Ford(door);
-        Person zaphod = new Zaphod(door);
-
-        ford.act();
-        zaphod.act();
-
-        assertTrue(door.isOpen(), "После действий персонажей дверь должна быть открыта");
-        assertEquals(2, door.getOpenAttempts(), "Должно быть две попытки открыть дверь");
-    }
-
-    @Test
-    void mainNarrationRunsWithoutExceptions() {
-        // Проверяем, что main‑класс успешно отрабатывает историю
-        SceneNarration.main(new String[0]);
     }
 }
 

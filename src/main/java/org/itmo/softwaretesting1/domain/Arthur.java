@@ -7,11 +7,11 @@ public class Arthur implements Person {
 
     public enum State {
         ALIVE,
-        HYPNOTIZED
+        HYPNOTIZED,
+        BE_AT_DOOR
     }
 
     private State state = State.ALIVE;
-    private Door targetDoor;
 
     @Override
     public String getName() {
@@ -22,18 +22,11 @@ public class Arthur implements Person {
         return state;
     }
 
-    public Door getTargetDoor() {
-        return targetDoor;
-    }
-
-    public void setTargetDoor(Door targetDoor) {
-        this.targetDoor = targetDoor;
-    }
 
     public void changeState(State newState) {
-        if (newState != null) {
-            this.state = newState;
-        }
+        if(newState == null) throw new RuntimeException("Состояние не может быть нул");
+        if(newState.equals(state)) throw new RuntimeException("Артур уже находится в этом состоянии");
+        this.state = newState;
     }
 
     public boolean isHypnotized() {

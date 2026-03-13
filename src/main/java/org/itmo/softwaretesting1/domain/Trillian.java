@@ -5,8 +5,13 @@ package org.itmo.softwaretesting1.domain;
  */
 public class Trillian implements Person {
 
+    public enum trillianState{
+        HOLDING_ARTHUR,
+        DONT_HOLDING_ARTHUR
+    }
+
+    private trillianState state = trillianState.DONT_HOLDING_ARTHUR;
     private Arthur holdingArthur;
-    private Door targetDoor;
 
     @Override
     public String getName() {
@@ -17,24 +22,26 @@ public class Trillian implements Person {
         return holdingArthur;
     }
 
-    public Door getTargetDoor() {
-        return targetDoor;
+    public trillianState getState() {
+        return state;
     }
 
-    /**
-     * Схватить Артура за руку.
-     */
-    public void grabArthur(Arthur arthur) {
+    public trillianState grabArthur(Arthur arthur) {
         this.holdingArthur = arthur;
+        if(!state.equals(trillianState.HOLDING_ARTHUR)) {
+            state = trillianState.HOLDING_ARTHUR;
+            return state;
+        }
+        else{
+            throw new RuntimeException("Она уже держит Артура");
+        }
     }
 
-    /**
-     * Потянуть Артура к двери.
-     */
-    public void pullArthurToDoor(Door door) {
-        this.targetDoor = door;
-        if (holdingArthur != null) {
-            holdingArthur.setTargetDoor(door);
+    public void pullArthurToDoor() {
+        if (holdingArthur != null && !holdingArthur.getState().equals(Arthur.State.BE_AT_DOOR)) {
+            holdingArthur.changeState(Arthur.State.BE_AT_DOOR);
+        }else{
+            throw new RuntimeException("Артур уже у двери");
         }
     }
 

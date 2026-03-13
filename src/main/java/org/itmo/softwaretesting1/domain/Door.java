@@ -5,20 +5,25 @@ package org.itmo.softwaretesting1.domain;
  */
 public class Door {
 
-    private final String id;
-    private boolean open;
+    public enum doorState{
+        OPEN,
+        CLOSE
+    }
+
+    private Person lastAttemptBy;
     private int openAttempts;
+    private doorState state = doorState.CLOSE;
 
-    public Door(String id) {
-        this.id = id;
+    public Door() {
+        this.openAttempts = 0;
     }
 
-    public String getId() {
-        return id;
+    public Person getLastAttemptBy() {
+        return lastAttemptBy;
     }
 
-    public boolean isOpen() {
-        return open;
+    public doorState isOpen() {
+        return state;
     }
 
     public int getOpenAttempts() {
@@ -28,12 +33,17 @@ public class Door {
     /**
      * Попытка открыть дверь.
      */
-    public boolean attemptOpen(Person by) {
+    public doorState attemptOpen(Person by) {
         openAttempts++;
-        if (!open) {
-            open = true;
+        this.lastAttemptBy = by;
+        if (openAttempts > 2 && this.state.equals(doorState.CLOSE)) {
+            state = doorState.OPEN;
+        }else if(!this.state.equals(doorState.CLOSE)){
+            throw new RuntimeException("Дверь уже открыта");
+        }else {
+            throw new RuntimeException("Дверь в истории откроется только с 3-го раза");
         }
-        return open;
+        return state;
     }
 }
 

@@ -1,13 +1,15 @@
 package org.itmo.softwaretesting1.domain;
 
-/**
- * Надвигающиеся воздухоплавающие грызуны,
- * которые способны загипнотизировать персонажей.
- */
+
 public class FlyingRodentGroup {
 
     private final int count;
-    private boolean approaching;
+    private rodentState state = rodentState.DONT_MOVE;
+
+    public enum rodentState{
+        APPROACHING,
+        DONT_MOVE
+    }
 
     public FlyingRodentGroup(int count) {
         if (count <= 0) {
@@ -20,19 +22,17 @@ public class FlyingRodentGroup {
         return count;
     }
 
-    public boolean isApproaching() {
-        return approaching;
+    public rodentState isApproaching() {
+        return state;
     }
 
     public void startApproach() {
-        this.approaching = true;
+        this.state = rodentState.APPROACHING;
     }
 
-    /**
-     * Загипнотизировать Артура, если группа надвигается.
-     */
+
     public void hypnotize(Arthur target) {
-        if (approaching && target != null) {
+        if (state == rodentState.APPROACHING && target != null) {
             target.changeState(Arthur.State.HYPNOTIZED);
         }
     }
