@@ -1,11 +1,13 @@
 package org.example;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BPlusTreeTest {
 
     @Test
+    @DisplayName("Простая вставка и поиск значений")
     void testSimpleInsert() {
         BPlusTree<Integer, String> tree = new BPlusTree<>(3);
         tree.insert(10, "A");
@@ -20,6 +22,7 @@ class BPlusTreeTest {
     }
 
     @Test
+    @DisplayName("Разделение листа при переполнении")
     void testLeafSplit() {
         BPlusTree<Integer, String> tree = new BPlusTree<>(3);
         tree.insert(1, "A");
@@ -35,6 +38,7 @@ class BPlusTreeTest {
     }
 
     @Test
+    @DisplayName("Удаление с заимствованием у соседа")
     void testDeleteWithBorrowing() {
         BPlusTree<Integer, String> tree = new BPlusTree<>(3);
         tree.insert(1, "A");
@@ -51,6 +55,7 @@ class BPlusTreeTest {
     }
 
     @Test
+    @DisplayName("Удаление со слиянием узлов")
     void testDeleteWithMerging() {
         BPlusTree<Integer, String> tree = new BPlusTree<>(3);
         tree.insert(1, "A");
@@ -68,6 +73,7 @@ class BPlusTreeTest {
     }
 
     @Test
+    @DisplayName("Поиск и валидация дерева для строковых ключей")
     void testSearchAndValidation() {
         BPlusTree<String, String> tree = new BPlusTree<>(4);
         tree.insert("apple", "fruit");
@@ -82,6 +88,7 @@ class BPlusTreeTest {
     }
 
     @Test
+    @DisplayName("Поведение пустого дерева")
     void testEmptyTree() {
         BPlusTree<Integer, String> tree = new BPlusTree<>(3);
         assertTrue(tree.isValidBPlusTree());
@@ -89,6 +96,7 @@ class BPlusTreeTest {
     }
 
     @Test
+    @DisplayName("Повторная вставка ключа обновляет значение")
     void testInsertDuplicateKeys() {
         BPlusTree<Integer, String> tree = new BPlusTree<>(3);
         tree.insert(1, "A");
@@ -98,6 +106,7 @@ class BPlusTreeTest {
     }
 
     @Test
+    @DisplayName("Удаление отсутствующего ключа не меняет дерево")
     void testDeleteNonExistentKey() {
         BPlusTree<Integer, String> tree = new BPlusTree<>(3);
         tree.insert(1, "A");
@@ -107,6 +116,7 @@ class BPlusTreeTest {
     }
 
     @Test
+    @DisplayName("Серия сложных операций вставки и удаления")
     void testComplexOperations() {
         BPlusTree<Integer, String> tree = new BPlusTree<>(3);
         for (int i = 1; i <= 10; i++) {
@@ -120,5 +130,11 @@ class BPlusTreeTest {
         assertNull(tree.search(5));
         assertEquals("Value1", tree.search(1));
         assertEquals("Value10", tree.search(10));
+    }
+
+    @Test
+    @DisplayName("Создание дерева со степенью больше 7 выбрасывает исключение")
+    void testCreateTreeWithDegreeGreaterThanSevenThrows() {
+        assertThrows(IllegalArgumentException.class, () -> new BPlusTree<Integer, String>(8));
     }
 }
